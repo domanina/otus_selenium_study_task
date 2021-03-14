@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import requests
 
+
 def pytest_addoption(parser):
     parser.addoption(
         '--browser_name',
@@ -31,7 +32,6 @@ def url(request):
 @pytest.fixture
 def headless(request):
     return request.config.getoption("--headless")
-
 
 
 @pytest.fixture(scope="function")
