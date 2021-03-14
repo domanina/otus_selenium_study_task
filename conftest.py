@@ -1,74 +1,73 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import logging
 import requests
+from selenium.webdriver.support.events import EventFiringWebDriver, AbstractEventListener
+
+logging.basicConfig(level=logging.INFO, filename="logs/test1.log")
+
+
+class MyListener(AbstractEventListener):
+
+    def before_navigate_to(self, url, driver):
+        logging.info(f"Opening  {url}")
+
+    def after_navigate_to(self, url, driver):
+        logging.info(f"Success opening {url}")
+
+    def before_find(self, by, value, driver):
+        logging.info(f"Looking for '{value}' with '{by}'")
+
+    def after_find(self, by, value, driver):
+        logging.info(f"Success finding '{value}' with '{by}'")
+
+    def before_click(self, element, driver):
+        logging.info(f"Clicking {element}")
+
+    def after_click(self, element, driver):
+        logging.info(f"Success click {element}")
+
+    def before_quit(self, driver):
+        logging.info(f"Ready to terminate {driver}")
+
+    def after_quit(self, browser):
+        logging.info(f"Finished")
+
+    def on_exception(self, exception, driver):
+        logging.error(f'GOT EXEPTIONS: {exception}')
+        driver.save_screenshot(f'logs/{exception}.png')
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        '--browser_name',
-        action='store',
-        default=None,
-        help="Choose browser: chrome or firefox or IE"
-    )
-    parser.addoption(
-        "--headless",
-        action='store',
-        default=False,
-        help="Choose mode: true or false "
-    )
-
-    parser.addoption(
-        "--url",
-        default="https://demo.opencart.com/",
-        help="This is request url"
-    )
+    parser.addoption("--browser", action="store", default="chrome")
+    parser.addoption("--executor", action="store", default="127.0.0.1")
+    parser.addoption("--vnc", action="store_true", default=False)
+    parser.addoption("--logs", action="store_true", default=False)
 
 
 @pytest.fixture
-def url(request):
-    return request.config.getoption("--url")
-
-@pytest.fixture
-def headless(request):
-    return request.config.getoption("--headless")
-
-
-@pytest.fixture(scope="function")
 def browser(request):
-    browser_name = request.config.getoption("browser_name")
-    url = request.config.getoption("--url")
-    mode = request.config.getoption("--headless")
-    browser = None
-    if browser_name == "chrome":
-        print("\nstart chrome browser for test..")
-        if mode == "true":
-            options = Options()
-            options.add_argument("--headless")
-            browser = webdriver.Chrome(options=options)
-        else:
-            options = Options()
-            options.add_argument("--start-fullscreen")
-            browser = webdriver.Chrome(options=options)
+    browser = request.config.getoption("--browser")
+    executor = request.config.getoption("--executor")
+    vnc = request.config.getoption("--vnc")
+    logs = request.config.getoption("--logs")
+    executor_url = f"http://{executor}:4444/wd/hub"
 
-    elif browser_name == "firefox":
-        print("\nstart firefox browser for test..")
-        if mode == "true":
-            options = Options()
-            options.add_argument("--headless")
-            browser = webdriver.Firefox(options=options)
-        else:
-            options = Options()
-            options.add_argument("-start-fullscreen")
-            browser = webdriver.Firefox(options=options)
+    caps = {
+        "browserName": browser,
+        "screenResolution": "1280x720",
+        "selenoid:options": {
+            "enableVNC": vnc,
+            "enableLog": logs,
+        }
+    }
 
-    elif browser_name == "IE":
-        print("\nstart IE browser for test..")
-        browser = webdriver.Ie()
+    driver = EventFiringWebDriver(webdriver.Remote(
+        command_executor=executor_url,
+        desired_capabilities=caps
+    ), MyListener())
 
-    else:
-        raise pytest.UsageError("--browser_name should be chrome or firefox or IE")
-    yield browser
+    yield driver
     print("\nquit browser..")
-    browser.quit()
-
+    driver.quit()
