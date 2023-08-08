@@ -1,5 +1,6 @@
 from Pages.BaseApp import BasePage
 from selenium.webdriver.common.by import By
+import allure
 
 
 class AdminSeacrhLocators:
@@ -48,16 +49,20 @@ class ElementsFinder(BasePage):
         return done.text
 
     def click_on_login_button(self):
-        return self.find_element(AdminSeacrhLocators.LOCATOR_LOGIN_BUTTON).click()
+        with allure.step("click"):
+            return self.find_element(AdminSeacrhLocators.LOCATOR_LOGIN_BUTTON).click()
 
     def click_on_logout_button(self):
-        return self.find_element(AdminSeacrhLocators.LOCATOR_LOGOUT_BUTTON).click()
+        with allure.step("click"):
+            return self.find_element(AdminSeacrhLocators.LOCATOR_LOGOUT_BUTTON).click()
 
     def click_on_forgot_pass_button(self):
-        return self.find_element(AdminSeacrhLocators.LOCATOR_FORGOT_PASS_BUTTON).click()
+        with allure.step("click"):
+            return self.find_element(AdminSeacrhLocators.LOCATOR_FORGOT_PASS_BUTTON).click()
 
     def click_on_reset_button(self):
-        return self.find_element(AdminSeacrhLocators.LOCATOR_RESET_BUTTON).click()
+        with allure.step("click"):
+            return self.find_element(AdminSeacrhLocators.LOCATOR_RESET_BUTTON).click()
 
     def check_next_autorizated_page(self):
         cur_URL = str(self.browser.current_url)
